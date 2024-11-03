@@ -79,7 +79,7 @@ while true; do
         1)
             # INSTALLATION
             process_notification "Начинаем подготовку (Starting preparation)..."
-            run_commands "cd $HOME && sudo apt update && sudo apt upgrade -y && apt install -y mc nano"
+            run_commands "cd $HOME && sudo apt update && sudo apt upgrade -y && apt install -y screen mc nano"
 
             process_notification "Устанавливаем шрифт (Installing font)..."
             run_commands "sudo apt install figlet"
