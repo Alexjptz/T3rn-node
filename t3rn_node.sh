@@ -115,7 +115,7 @@ while true; do
             echo
 
             export PRIVATE_KEY_LOCAL="$PRIVATE_KEY_LOCAL"
-            export ENABLED_NETWORKS="arbitrum-sepolia,base-sepolia,optimism-sepolia,l1rn"
+            export ENABLED_NETWORKS="arbitrum-sepolia,base-sepolia,blast-sepolia,optimism-sepolia,l1rn"
 
             echo ""
             show_green "--- НОДА УСТАНОВЛЕНА. NODE INSTALLED ---"
