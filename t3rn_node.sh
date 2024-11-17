@@ -130,9 +130,11 @@ while true; do
                 case $option in
                     1)
                         export EXECUTOR_PROCESS_ORDERS="true"
+                        break
                         ;;
                     2)
                         export EXECUTOR_PROCESS_ORDERS="false"
+                        break
                         ;;
                     *)
                         incorrect_option
