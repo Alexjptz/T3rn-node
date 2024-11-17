@@ -68,10 +68,11 @@ sleep 1
 
 while true; do
     echo "1. Установить T3rn (Installation)"
-    echo "2. Запуск/перезапуск/остановка (Start/restart/stop)"
-    echo "3. Логи (Logs)"
-    echo "4. Удаление (Delete)"
-    echo "5. Выход (Exit)"
+    echo "2. Настроить (tunning)"
+    echo "3. Запуск/перезапуск/остановка (Start/restart/stop)"
+    echo "4. Логи (Logs)"
+    echo "5. Удаление (Delete)"
+    echo "6. Выход (Exit)"
     echo ""
     read -p "Выберите опцию (Select option): " option
 
@@ -102,26 +103,44 @@ while true; do
             process_notification "Распаковка (Extracting...)"
             run_commands "tar -xzvf executor-linux-${LATEST_VERSION}.tar.gz && rm -rf executor-linux-${LATEST_VERSION}.tar.gz"
 
-            process_notification "Настраиваем (Setting up)..."
-            cd $HOME/executor/
-            export NODE_ENV="testnet"
-            export LOG_LEVEL="debug"
-            export LOG_PRETTY="false"
-            export EXECUTOR_PROCESS_ORDERS="true"
-            export EXECUTOR_PROCESS_CLAIMS="true"
-
-            show_orange "Введите (Enter)"
-            read -p "Privat key: " PRIVATE_KEY_LOCAL
-            echo
-
-            export PRIVATE_KEY_LOCAL="$PRIVATE_KEY_LOCAL"
-            export ENABLED_NETWORKS="arbitrum-sepolia,base-sepolia,blast-sepolia,optimism-sepolia,l1rn"
-
             echo ""
             show_green "--- НОДА УСТАНОВЛЕНА. NODE INSTALLED ---"
             echo ""
             ;;
         2)
+            process_notification "Настраиваем (Setting up)..."
+            echo
+            cd $HOME/executor/
+            export NODE_ENV="testnet"
+            export LOG_LEVEL="debug"
+            export LOG_PRETTY="false"
+            export ENABLED_NETWORKS="arbitrum-sepolia,base-sepolia,blast-sepolia,optimism-sepolia,l1rn"
+            export EXECUTOR_PROCESS_CLAIMS="true"
+
+            show_orange "Введите (Enter)"
+            read -p "Privat key: " PRIVATE_KEY_LOCAL
+            echo
+            export PRIVATE_KEY_LOCAL="$PRIVATE_KEY_LOCAL"
+            echo
+            show_orange "Выберите (Choose):"
+                echo "1. Обработка и сборка (Execute and claim)"
+                echo "2. Только сборка (ONLY Claim)"
+                read -p "Введите номер опции (Enter option number): " option
+            while true; do
+                case $option in
+                    1)
+                        export EXECUTOR_PROCESS_ORDERS="true"
+                        ;;
+                    2)
+                        export EXECUTOR_PROCESS_ORDERS="false"
+                        ;;
+                    *)
+                        incorrect_option
+                        ;;
+                esac
+            done
+            ;;
+        3)
             # START/RESTART/STOP
             echo
             while true; do
@@ -165,18 +184,21 @@ while true; do
                         break
                         ;;
                     3)
+                        break
+                        ;;
+                    *)
                         incorrect_option
                         ;;
                 esac
             done
             echo
             ;;
-        3)
+        4)
             # LOGS
             process_notification "Подключаемся (Connecting)..." && sleep 2
             cd $HOME && screen -r t3rn
             ;;
-        4)
+        5)
             # DELETE
             process_notification "Удаление (Deleting)..."
             echo
@@ -213,7 +235,7 @@ while true; do
                 esac
             done
             ;;
-        5)
+        6)
             exit_script
             ;;
         *)
