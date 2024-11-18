@@ -67,6 +67,7 @@ echo ""
 sleep 1
 
 while true; do
+    show_green "------ MAIN MENU ------"
     echo "1. Установить T3rn (Installation)"
     echo "2. Настроить (tunning)"
     echo "3. Запуск/перезапуск/остановка (Start/restart/stop)"
@@ -141,6 +142,7 @@ while true; do
                         ;;
                 esac
             done
+            echo
             ;;
         3)
             # START/RESTART/STOP
