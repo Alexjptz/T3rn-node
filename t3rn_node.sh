@@ -117,12 +117,21 @@ while true; do
             export LOG_PRETTY="false"
             export ENABLED_NETWORKS="arbitrum-sepolia,base-sepolia,blast-sepolia,optimism-sepolia,l1rn"
             export EXECUTOR_PROCESS_CLAIMS="true"
+            export EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API="false"
+            export RPC_ENDPOINTS_ARBT="https://arbitrum-sepolia-rpc.publicnode.com,https://api.zan.top/arb-sepolia"
+            export RPC_ENDPOINTS_BSSP="https://sepolia.base.org,https://base-sepolia-rpc.publicnode.com"
+            export RPC_ENDPOINTS_BLSS="https://sepolia.blast.io"
+            export RPC_ENDPOINTS_OPSP="https://sepolia.optimism.io,https://optimism-sepolia.gateway.tenderly.co"
 
             show_orange "Введите (Enter)"
             read -p "Privat key: " PRIVATE_KEY_LOCAL
             echo
             export PRIVATE_KEY_LOCAL="$PRIVATE_KEY_LOCAL"
             echo
+            read -p "Gas price (press enter for default 10): " GAS_PRICE
+            GAS_PRICE=${GAS_PRICE:-10}
+            export EXECUTOR_MAX_L3_GAS_PRICE=$GAS_PRICE
+
             show_orange "Выберите (Choose):"
                 echo "1. Обработка и сборка (Execute and claim)"
                 echo "2. Только сборка (ONLY Claim)"
