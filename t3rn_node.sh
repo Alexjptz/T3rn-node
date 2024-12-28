@@ -93,8 +93,11 @@ while true; do
 
             # Binary installation
             process_notification "Установка T3rn (Installation)..."
-            echo ""
-            LATEST_VERSION=$(curl -s https://api.github.com/repos/t3rn/executor-release/releases/latest | grep 'tag_name' | cut -d\" -f4)
+            echo
+            # Latest stable version
+            # LATEST_VERSION=$(curl -s https://api.github.com/repos/t3rn/executor-release/releases/latest | grep 'tag_name' | cut -d\" -f4)
+            # Latest pre-release version
+            LATEST_VERSION=$(curl -s https://api.github.com/repos/t3rn/executor-release/releases | jq -r 'map(select(.prerelease == true)) | .[0].tag_name')
             EXECUTOR_URL="https://github.com/t3rn/executor-release/releases/download/${LATEST_VERSION}/executor-linux-${LATEST_VERSION}.tar.gz"
 
             process_notification "Скачиваем последнюю версию (Downloading latest version)"
@@ -104,9 +107,9 @@ while true; do
             process_notification "Распаковка (Extracting...)"
             run_commands "tar -xzvf executor-linux-${LATEST_VERSION}.tar.gz && rm -rf executor-linux-${LATEST_VERSION}.tar.gz"
 
-            echo ""
+            echo
             show_green "--- НОДА УСТАНОВЛЕНА. NODE INSTALLED ---"
-            echo ""
+            echo
             ;;
         2)
             process_notification "Настраиваем (Setting up)..."
