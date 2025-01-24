@@ -115,16 +115,20 @@ while true; do
             process_notification "Настраиваем (Setting up)..."
             echo
             cd $HOME/executor/
-            export NODE_ENV="testnet"
-            export LOG_LEVEL="debug"
-            export LOG_PRETTY="false"
-            export ENABLED_NETWORKS="arbitrum-sepolia,base-sepolia,blast-sepolia,optimism-sepolia,l1rn"
-            export EXECUTOR_PROCESS_CLAIMS="true"
-            export EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API="false"
+            export NODE_ENV=testnet
+            export LOG_LEVEL=debug
+            export LOG_PRETTY=false
+            export ENABLED_NETWORKS="arbitrum-sepolia,blast-sepolia,base-sepolia,optimism-sepolia,l1rn"
+            export EXECUTOR_PROCESS_CLAIMS=true
+            export EXECUTOR_PROCESS_ORDERS_API_ENABLED=false
+            export EXECUTOR_ENABLE_BATCH_BIDING=true
+            export EXECUTOR_PROCESS_BIDS_ENABLED=true
+            export EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API=false
             export RPC_ENDPOINTS_ARBT="https://arbitrum-sepolia-rpc.publicnode.com,https://api.zan.top/arb-sepolia"
             export RPC_ENDPOINTS_BSSP="https://sepolia.base.org,https://base-sepolia-rpc.publicnode.com"
             export RPC_ENDPOINTS_BLSS="https://sepolia.blast.io"
             export RPC_ENDPOINTS_OPSP="https://sepolia.optimism.io,https://optimism-sepolia.gateway.tenderly.co"
+            export RPC_ENDPOINTS_L1RN='https://brn.rpc.caldera.xyz,https://brn.calderarpc.com/http'
 
             show_orange "Введите (Enter)"
             read -p "Privat key: " PRIVATE_KEY_LOCAL
