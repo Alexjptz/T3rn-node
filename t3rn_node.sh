@@ -115,7 +115,7 @@ while true; do
             process_notification "Настраиваем (Setting up)..."
             echo
             cd $HOME/executor/
-            export NODE_ENV=testnet
+            export ENVIRONMENT=testnet
             export LOG_LEVEL=debug
             export LOG_PRETTY=false
             export ENABLED_NETWORKS="arbitrum-sepolia,blast-sepolia,base-sepolia,optimism-sepolia,l1rn"
