@@ -27,17 +27,18 @@ exit_script() {
         exit 0
 }
 
-incorrect_option () {
-    echo ""
+incorrect_option() {
+    echo
     show_red "Неверная опция. Пожалуйста, выберите из тех, что есть."
-    echo ""
+    echo
     show_red "Invalid option. Please choose from the available options."
-    echo ""
+    echo
 }
 
 process_notification() {
     local message="$1"
     show_orange "$message"
+    echo
     sleep 1
 }
 
@@ -46,30 +47,33 @@ run_commands() {
 
     if eval "$commands"; then
         sleep 1
-        echo ""
+        echo
         show_green "Успешно (Success)"
-        echo ""
+        echo
     else
         sleep 1
-        echo ""
+        echo
         show_red "Ошибка (Fail)"
-        echo ""
+        echo
     fi
 }
 
-show_orange " .___________. ____   .______      .__   __. " && sleep 0.2
-show_orange " |           ||___ \  |   _  \     |  \ |  | " && sleep 0.2
-show_orange "  ---|  |----   __) | |  |_)  |    |   \|  | " && sleep 0.2
-show_orange "     |  |      |__ <  |      /     |  .    | " && sleep 0.2
-show_orange "     |  |      ___) | |  |\  \----.|  |\   | " && sleep 0.2
-show_orange "     |__|     |____/  | _|  ._____||__| \__| " && sleep 0.2
-echo ""
-sleep 1
+print_logo() {
+    show_orange " .___________. ____   .______      .__   __. " && sleep 0.1
+    show_orange " |           ||___ \  |   _  \     |  \ |  | " && sleep 0.1
+    show_orange "  ---|  |----   __) | |  |_)  |    |   \|  | " && sleep 0.1
+    show_orange "     |  |      |__ <  |      /     |  .    | " && sleep 0.1
+    show_orange "     |  |      ___) | |  |\  \----.|  |\   | " && sleep 0.1
+    show_orange "     |__|     |____/  | _|  ._____||__| \__| " && sleep 0.1
+    echo
+    sleep 1
+}
 
 while true; do
+    print_logo
     show_green "------ MAIN MENU ------"
     echo "1. Установить T3rn (Installation)"
-    echo "2. Настроить (tunning)"
+    echo "2. Настроить (Tunning)"
     echo "3. Запуск/перезапуск/остановка (Start/restart/stop)"
     echo "4. Логи (Logs)"
     echo "5. Удаление (Delete)"
@@ -118,40 +122,94 @@ while true; do
             export ENVIRONMENT=testnet
             export LOG_LEVEL=debug
             export LOG_PRETTY=false
-            export ENABLED_NETWORKS="arbitrum-sepolia,blast-sepolia,base-sepolia,optimism-sepolia,l1rn"
-            export EXECUTOR_PROCESS_CLAIMS=true
-            export EXECUTOR_PROCESS_ORDERS_API_ENABLED=false
-            export EXECUTOR_ENABLE_BATCH_BIDING=true
+            export EXECUTOR_PROCESS_CLAIMS_ENABLED=true
             export EXECUTOR_PROCESS_BIDS_ENABLED=true
-            export EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API=false
-            export RPC_ENDPOINTS_ARBT="https://arbitrum-sepolia-rpc.publicnode.com,https://api.zan.top/arb-sepolia"
-            export RPC_ENDPOINTS_BSSP="https://sepolia.base.org,https://base-sepolia-rpc.publicnode.com"
-            export RPC_ENDPOINTS_BLSS="https://sepolia.blast.io"
-            export RPC_ENDPOINTS_OPSP="https://sepolia.optimism.io,https://optimism-sepolia.gateway.tenderly.co"
-            export RPC_ENDPOINTS_L1RN='https://brn.rpc.caldera.xyz,https://brn.calderarpc.com/http'
-
-            show_orange "Введите (Enter)"
-            read -p "Privat key: " PRIVATE_KEY_LOCAL
-            echo
-            export PRIVATE_KEY_LOCAL="$PRIVATE_KEY_LOCAL"
-            echo
-            read -p "Gas price (press enter for default 10): " GAS_PRICE
-            GAS_PRICE=${GAS_PRICE:-10}
-            export EXECUTOR_MAX_L3_GAS_PRICE=$GAS_PRICE
+            export ENABLED_NETWORKS="arbitrum-sepolia,base-sepolia,optimism-sepolia,l2rn"
+            export RPC_ENDPOINTS='{
+                "l2rn": ["https://b2n.rpc.caldera.xyz/http"],
+                "arbt": ["https://api.zan.top/arb-sepolia", "https://arbitrum-sepolia.drpc.org", "https://arbitrum-sepolia-rpc.publicnode.com", "https://sepolia-rollup.arbitrum.io/rpc"],
+                "bast": ["https://base-sepolia-rpc.publicnode.com", "https://base-sepolia.drpc.org", "https://base-sepolia.gateway.tenderly.co"],
+                "opst": ["https://sepolia.optimism.io", "https://optimism-sepolia.drpc.org", "https://endpoints.omniatech.io/v1/op/sepolia/public", "https://api.zan.top/opt-sepolia"],
+                "unit": ["https://unichain-sepolia.drpc.org", "https://sepolia.unichain.org"]
+            }'
 
             show_orange "Выберите (Choose):"
-                echo "1. Обработка и сборка (Execute and claim)"
-                echo "2. Только сборка (ONLY Claim)"
+                echo "1. Ввести (enter) Private Key"
+                echo "2. Ввести (enter) Gas Price"
+                echo "3. Выбрать рабочий режим (Choose Execute mode)"
+                echo "4. Выбрать (Choose) RPC/API"
                 read -p "Введите номер опции (Enter option number): " option
             while true; do
                 case $option in
                     1)
-                        export EXECUTOR_PROCESS_ORDERS="true"
+                        # ENTER PK
+                        process_notification "PRIVAT KEY"
+                        show_orange "Введите (Enter)"
+                        read -p "Privat key: " PRIVATE_KEY_LOCAL
+                        echo
+                        export PRIVATE_KEY_LOCAL="$PRIVATE_KEY_LOCAL"
                         break
                         ;;
                     2)
-                        export EXECUTOR_PROCESS_ORDERS="false"
+                        # SETTING GAS PRICE
+                        process_notification "GAS SETTINGS"
+                        show_orange "Введите (Enter)"
+                        read -p "Gas price (press enter for default 1000): " GAS_PRICE
+                        GAS_PRICE=${GAS_PRICE:-1000}
+                        export EXECUTOR_MAX_L3_GAS_PRICE=$GAS_PRICE
                         break
+                        ;;
+                    3)
+                        # MODE CHOICE
+                        process_notification "MODE MENU"
+                        show_orange "Выберите режим (Choose mode):"
+                            echo "1. Обработка и сборка (Execute and claim)"
+                            echo "2. Только сборка (ONLY Claim)"
+                            read -p "Введите номер опции (Enter option number): " option
+                            case $option in
+                                1)
+                                    # EXECUTE AND CLAIM
+                                    export EXECUTOR_PROCESS_ORDERS_ENABLED=true
+                                    show_green "🟠 EXECUTE AND CLAIM MODE"
+                                    break
+                                    ;;
+                                2)
+                                    export EXECUTOR_PROCESS_ORDERS_ENABLED=false
+                                    # ONLY CLAIM
+                                    show_green "🟠 CLAIM MODE"
+                                    break
+                                    ;;
+                                *)
+                                    incorrect_option
+                                    ;;
+                            esac
+                        ;;
+                    4)
+                        # RPC OR API
+                        process_notification "API or RPC MODE"
+                        export EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API=true
+                        export EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API=false
+                        show_orange "Выберите режим (Choose mode):"
+                            echo "1. API (Fast and Furious)"
+                            echo "2. RPC (In case if API falldown)"
+                            read -p "Введите номер опции (Enter option number): " option
+                            case $option in
+                                1)
+                                    # API
+                                    export EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API=true
+                                    show_green "🟠 API MODE"
+                                    break
+                                    ;;
+                                2)
+                                    # RPC
+                                    export EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API=false
+                                    show_green "🟠 RPC MODE"
+                                    break
+                                    ;;
+                                *)
+                                    incorrect_option
+                                    ;;
+                            esac
                         ;;
                     *)
                         incorrect_option
@@ -162,13 +220,14 @@ while true; do
             ;;
         3)
             # START/RESTART/STOP
+            show_green "------ OPERATIONAL MENU ------"
             echo
             while true; do
                 show_orange "Выберите (Choose):"
                 echo "1. Запусить/перезапустить (Start/Restart)"
                 echo "2. Остановить (Stop)"
                 echo "3. Выход (Exit)"
-                echo ""
+                echo
 
                 read -p "Введите номер опции (Enter option number): " option
 
@@ -178,11 +237,11 @@ while true; do
                         if screen -r t3rn -X quit; then
                             sleep 1
                             show_green "Успешно (Success)"
-                            echo ""
+                            echo
                         else
                             sleep 1
                             show_blue "Не найдена (Didn't find)"
-                            echo ""
+                            echo
                         fi
 
                         process_notification "Создаем и запускаем  (Creating and starting)..."
@@ -195,11 +254,11 @@ while true; do
                         if screen -r t3rn -X quit; then
                             sleep 1
                             show_green "Успешно (Success)"
-                            echo ""
+                            echo
                         else
                             sleep 1
                             show_blue "Не найдена (Didn't find)"
-                            echo ""
+                            echo
                         fi
                         break
                         ;;
