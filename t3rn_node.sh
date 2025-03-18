@@ -73,8 +73,8 @@ while true; do
     print_logo
     show_green "------ MAIN MENU ------"
     echo "1. Установить T3rn (Installation)"
-    echo "2. Настроить (Tunning)"
-    echo "3. Запуск/перезапуск/остановка (Start/restart/stop)"
+    echo "2. Настроить (Tunning menu)"
+    echo "3. Управление (Operational menu)"
     echo "4. Логи (Logs)"
     echo "5. Удаление (Delete)"
     echo "6. Выход (Exit)"
@@ -148,6 +148,7 @@ while true; do
                         read -p "Privat key: " PRIVATE_KEY_LOCAL
                         echo
                         export PRIVATE_KEY_LOCAL="$PRIVATE_KEY_LOCAL"
+                        echo
                         break
                         ;;
                     2)
@@ -157,6 +158,7 @@ while true; do
                         read -p "Gas price (press enter for default 1000): " GAS_PRICE
                         GAS_PRICE=${GAS_PRICE:-1000}
                         export EXECUTOR_MAX_L3_GAS_PRICE=$GAS_PRICE
+                        echo
                         break
                         ;;
                     3)
@@ -170,13 +172,17 @@ while true; do
                                 1)
                                     # EXECUTE AND CLAIM
                                     export EXECUTOR_PROCESS_ORDERS_ENABLED=true
+                                    echo
                                     show_green "🟠 EXECUTE AND CLAIM MODE"
+                                    echo
                                     break
                                     ;;
                                 2)
-                                    export EXECUTOR_PROCESS_ORDERS_ENABLED=false
                                     # ONLY CLAIM
+                                    export EXECUTOR_PROCESS_ORDERS_ENABLED=false
+                                    echo
                                     show_green "🟠 CLAIM MODE"
+                                    echo
                                     break
                                     ;;
                                 *)
@@ -197,13 +203,17 @@ while true; do
                                 1)
                                     # API
                                     export EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API=true
+                                    echo
                                     show_green "🟠 API MODE"
+                                    echo
                                     break
                                     ;;
                                 2)
                                     # RPC
                                     export EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API=false
+                                    echo
                                     show_green "🟠 RPC MODE"
+                                    echo
                                     break
                                     ;;
                                 *)
