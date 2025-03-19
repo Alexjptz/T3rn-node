@@ -193,8 +193,6 @@ while true; do
                     4)
                         # RPC OR API
                         process_notification "API or RPC MODE"
-                        export EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API=true
-                        export EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API=false
                         show_orange "Выберите режим (Choose mode):"
                             echo "1. API (Fast and Furious)"
                             echo "2. RPC (In case if API falldown)"
@@ -203,6 +201,7 @@ while true; do
                                 1)
                                     # API
                                     export EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API=true
+                                    export EXECUTOR_PROCESS_ORDERS_API_ENABLED=true
                                     echo
                                     show_green "🟠 API MODE"
                                     echo
@@ -211,6 +210,7 @@ while true; do
                                 2)
                                     # RPC
                                     export EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API=false
+                                    export EXECUTOR_PROCESS_ORDERS_API_ENABLED=false
                                     echo
                                     show_green "🟠 RPC MODE"
                                     echo
