@@ -124,6 +124,7 @@ while true; do
             export LOG_PRETTY=false
             export EXECUTOR_PROCESS_CLAIMS_ENABLED=true
             export EXECUTOR_PROCESS_BIDS_ENABLED=true
+            export EXECUTOR_ENABLE_BATCH_BIDING=true
             export ENABLED_NETWORKS="arbitrum-sepolia,base-sepolia,optimism-sepolia,unichain-sepolia,l2rn"
             export RPC_ENDPOINTS='{
                 "l2rn": ["https://b2n.rpc.caldera.xyz/http"],
@@ -133,99 +134,76 @@ while true; do
                 "unit": ["https://unichain-sepolia.drpc.org", "https://sepolia.unichain.org"]
             }'
 
-            show_orange "Выберите (Choose):"
-                echo "1. Ввести (enter) Private Key"
-                echo "2. Ввести (enter) Gas Price"
-                echo "3. Выбрать рабочий режим (Choose Execute mode)"
-                echo "4. Выбрать (Choose) RPC/API"
+            # ENTER PK
+            process_notification "PRIVAT KEY"
+            show_orange "Введите (Enter)"
+            read -p "Privat key: " PRIVATE_KEY_LOCAL
+            echo
+            export PRIVATE_KEY_LOCAL="$PRIVATE_KEY_LOCAL"
+            echo
+
+            # SETTING GAS PRICE
+            process_notification "GAS SETTINGS"
+            show_orange "Введите (Enter)"
+            read -p "Gas price (press enter for default 1000): " GAS_PRICE
+            GAS_PRICE=${GAS_PRICE:-1000}
+            export EXECUTOR_MAX_L3_GAS_PRICE=$GAS_PRICE
+            show_green "🟠 GAS PRICE = $GAS_PRICE"
+            echo
+
+            # MODE CHOICE
+            process_notification "MODE"
+            show_orange "Выберите режим (Choose mode):"
+                echo "1. Обработка и сборка (Execute and claim)"
+                echo "2. Только сборка (ONLY Claim)"
                 read -p "Введите номер опции (Enter option number): " option
-            while true; do
                 case $option in
                     1)
-                        # ENTER PK
-                        process_notification "PRIVAT KEY"
-                        show_orange "Введите (Enter)"
-                        read -p "Privat key: " PRIVATE_KEY_LOCAL
+                        # EXECUTE AND CLAIM
+                        export EXECUTOR_PROCESS_ORDERS_ENABLED=true
                         echo
-                        export PRIVATE_KEY_LOCAL="$PRIVATE_KEY_LOCAL"
+                        show_green "🟠 EXECUTE AND CLAIM MODE"
                         echo
-                        break
                         ;;
                     2)
-                        # SETTING GAS PRICE
-                        process_notification "GAS SETTINGS"
-                        show_orange "Введите (Enter)"
-                        read -p "Gas price (press enter for default 1000): " GAS_PRICE
-                        GAS_PRICE=${GAS_PRICE:-1000}
-                        export EXECUTOR_MAX_L3_GAS_PRICE=$GAS_PRICE
+                        # ONLY CLAIM
+                        export EXECUTOR_PROCESS_ORDERS_ENABLED=false
                         echo
-                        break
-                        ;;
-                    3)
-                        # MODE CHOICE
-                        process_notification "MODE MENU"
-                        show_orange "Выберите режим (Choose mode):"
-                            echo "1. Обработка и сборка (Execute and claim)"
-                            echo "2. Только сборка (ONLY Claim)"
-                            read -p "Введите номер опции (Enter option number): " option
-                            case $option in
-                                1)
-                                    # EXECUTE AND CLAIM
-                                    export EXECUTOR_PROCESS_ORDERS_ENABLED=true
-                                    echo
-                                    show_green "🟠 EXECUTE AND CLAIM MODE"
-                                    echo
-                                    break
-                                    ;;
-                                2)
-                                    # ONLY CLAIM
-                                    export EXECUTOR_PROCESS_ORDERS_ENABLED=false
-                                    echo
-                                    show_green "🟠 CLAIM MODE"
-                                    echo
-                                    break
-                                    ;;
-                                *)
-                                    incorrect_option
-                                    ;;
-                            esac
-                        ;;
-                    4)
-                        # RPC OR API
-                        process_notification "API or RPC MODE"
-                        show_orange "Выберите режим (Choose mode):"
-                            echo "1. API (Fast and Furious)"
-                            echo "2. RPC (In case if API falldown)"
-                            read -p "Введите номер опции (Enter option number): " option
-                            case $option in
-                                1)
-                                    # API
-                                    export EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API=true
-                                    export EXECUTOR_PROCESS_ORDERS_API_ENABLED=true
-                                    echo
-                                    show_green "🟠 API MODE"
-                                    echo
-                                    break
-                                    ;;
-                                2)
-                                    # RPC
-                                    export EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API=false
-                                    export EXECUTOR_PROCESS_ORDERS_API_ENABLED=false
-                                    echo
-                                    show_green "🟠 RPC MODE"
-                                    echo
-                                    break
-                                    ;;
-                                *)
-                                    incorrect_option
-                                    ;;
-                            esac
+                        show_green "🟠 CLAIM MODE"
+                        echo
                         ;;
                     *)
                         incorrect_option
                         ;;
                 esac
-            done
+
+            # RPC OR API
+            process_notification "API or RPC MODE"
+            show_orange "Выберите режим (Choose mode):"
+                echo "1. API (Fast and Furious)"
+                echo "2. RPC (In case if API falldown)"
+                read -p "Введите номер опции (Enter option number): " option
+                case $option in
+                    1)
+                        # API
+                        export EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API=true
+                        export EXECUTOR_PROCESS_ORDERS_API_ENABLED=true
+                        echo
+                        show_green "🟠 API MODE"
+                        echo
+                        ;;
+                    2)
+                        # RPC
+                        export EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API=false
+                        export EXECUTOR_PROCESS_ORDERS_API_ENABLED=false
+                        echo
+                        show_green "🟠 RPC MODE"
+                        echo
+                        ;;
+                    *)
+                        incorrect_option
+                        ;;
+                esac
             echo
             ;;
         3)
