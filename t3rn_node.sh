@@ -124,7 +124,7 @@ while true; do
             export LOG_PRETTY=false
             export EXECUTOR_PROCESS_CLAIMS_ENABLED=true
             export EXECUTOR_PROCESS_BIDS_ENABLED=true
-            export ENABLED_NETWORKS="arbitrum-sepolia,base-sepolia,optimism-sepolia,l2rn"
+            export ENABLED_NETWORKS="arbitrum-sepolia,base-sepolia,optimism-sepolia,unichain-sepolia,l2rn"
             export RPC_ENDPOINTS='{
                 "l2rn": ["https://b2n.rpc.caldera.xyz/http"],
                 "arbt": ["https://api.zan.top/arb-sepolia", "https://arbitrum-sepolia.drpc.org", "https://arbitrum-sepolia-rpc.publicnode.com", "https://sepolia-rollup.arbitrum.io/rpc"],
