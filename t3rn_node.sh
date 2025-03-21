@@ -98,19 +98,39 @@ while true; do
             # Binary installation
             process_notification "Установка T3rn (Installation)..."
             echo
-            # Latest stable version
-            LATEST_VERSION=$(curl -s https://api.github.com/repos/t3rn/executor-release/releases/latest | grep 'tag_name' | cut -d\" -f4)
-            # Latest pre-release version
-            # LATEST_VERSION=$(curl -s https://api.github.com/repos/t3rn/executor-release/releases | jq -r 'map(select(.prerelease == true)) | .[0].tag_name')
-            EXECUTOR_URL="https://github.com/t3rn/executor-release/releases/download/${LATEST_VERSION}/executor-linux-${LATEST_VERSION}.tar.gz"
+            show_orange "Выберите версию (Choose version):"
+                echo "1. 53.1"
+                echo "2. Latest"
+                echo
 
-            process_notification "Скачиваем последнюю версию (Downloading latest version)"
-            show_green "LATEST VERSION = $LATEST_VERSION" && sleep 2
-            run_commands "curl -L -o executor-linux-${LATEST_VERSION}.tar.gz $EXECUTOR_URL"
+                read -p "Введите номер опции (Enter option number): " option
+                case $option in
+                    1)
+                        # 53.1
+                        process_notification "Загружаем v53.1 (Downloading v53.1)"
+                        run_commands "wget https://github.com/t3rn/exec utor-release/releases/download/v0.53.1/executor-linux-v0.53.1.tar.gz"
+                        echo
+                        process_notification "Распаковка v53.1 (Downloading v53.1)"
+                        run_commands "tar -xvzf executor-linux-v0.53.1.tar.gz && rm -rf executor-linux-v0.53.1.tar.gz"
+                        ;;
+                    2)
+                        # LATEST
+                        LATEST_VERSION=$(curl -s https://api.github.com/repos/t3rn/executor-release/releases/latest | grep 'tag_name' | cut -d\" -f4)
+                        # Latest pre-release version
+                        # LATEST_VERSION=$(curl -s https://api.github.com/repos/t3rn/executor-release/releases | jq -r 'map(select(.prerelease == true)) | .[0].tag_name')
+                         EXECUTOR_URL="https://github.com/t3rn/executor-release/releases/download/${LATEST_VERSION}/executor-linux-${LATEST_VERSION}.tar.gz"
 
-            process_notification "Распаковка (Extracting...)"
-            run_commands "tar -xzvf executor-linux-${LATEST_VERSION}.tar.gz && rm -rf executor-linux-${LATEST_VERSION}.tar.gz"
+                        process_notification "Скачиваем последнюю версию (Downloading latest version)"
+                        show_green "LATEST VERSION = $LATEST_VERSION" && sleep 2
+                        run_commands "curl -L -o executor-linux-${LATEST_VERSION}.tar.gz $EXECUTOR_URL"
 
+                        process_notification "Распаковка (Extracting...)"
+                        run_commands "tar -xzvf executor-linux-${LATEST_VERSION}.tar.gz && rm -rf executor-linux-${LATEST_VERSION}.tar.gz"
+                        ;;
+                    *)
+                        incorrect_option
+                        ;;
+                esac
             echo
             show_green "--- НОДА УСТАНОВЛЕНА. NODE INSTALLED ---"
             echo
