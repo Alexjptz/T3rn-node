@@ -108,7 +108,7 @@ while true; do
                     1)
                         # 53.1
                         process_notification "Загружаем v53.1 (Downloading v53.1)"
-                        run_commands "wget https://github.com/t3rn/exec utor-release/releases/download/v0.53.1/executor-linux-v0.53.1.tar.gz"
+                        run_commands "wget https://github.com/t3rn/executor-release/releases/download/v0.53.1/executor-linux-v0.53.1.tar.gz"
                         echo
                         process_notification "Распаковка v53.1 (Downloading v53.1)"
                         run_commands "tar -xvzf executor-linux-v0.53.1.tar.gz && rm -rf executor-linux-v0.53.1.tar.gz"
