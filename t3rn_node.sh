@@ -146,6 +146,7 @@ while true; do
             export EXECUTOR_PROCESS_BIDS_ENABLED=true
             export EXECUTOR_ENABLE_BATCH_BIDING=true
             export ENABLED_NETWORKS="arbitrum-sepolia,base-sepolia,optimism-sepolia,unichain-sepolia,l2rn"
+            export DISABLED_NETWORKS='blast-sepolia'
             export RPC_ENDPOINTS='{
                 "l2rn": ["https://b2n.rpc.caldera.xyz/http"],
                 "arbt": ["https://api.zan.top/arb-sepolia", "https://arbitrum-sepolia.drpc.org", "https://arbitrum-sepolia-rpc.publicnode.com", "https://sepolia-rollup.arbitrum.io/rpc"],
