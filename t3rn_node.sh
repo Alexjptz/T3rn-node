@@ -87,50 +87,21 @@ while true; do
             process_notification "Начинаем подготовку (Starting preparation)..."
             run_commands "cd $HOME && sudo apt update && sudo apt upgrade -y && apt install -y screen mc nano"
 
-            process_notification "Устанавливаем шрифт (Installing font)..."
-            run_commands "sudo apt install figlet"
-
-            FONT_PATH="/usr/share/figlet/starwars.flf"
-            if [ ! -f "$FONT_PATH" ]; then
-                sudo wget -P /usr/share/figlet/ http://www.figlet.org/fonts/starwars.flf
-            fi
-
             # Binary installation
             process_notification "Установка T3rn (Installation)..."
             echo
-            show_orange "Выберите версию (Choose version):"
-                echo "1. 53.1"
-                echo "2. Latest"
-                echo
+            # LATEST
+            LATEST_VERSION=$(curl -s https://api.github.com/repos/t3rn/executor-release/releases/latest | grep 'tag_name' | cut -d\" -f4)
+            # Latest pre-release version
+            # LATEST_VERSION=$(curl -s https://api.github.com/repos/t3rn/executor-release/releases | jq -r 'map(select(.prerelease == true)) | .[0].tag_name')
+            EXECUTOR_URL="https://github.com/t3rn/executor-release/releases/download/${LATEST_VERSION}/executor-linux-${LATEST_VERSION}.tar.gz"
 
-                read -p "Введите номер опции (Enter option number): " option
-                case $option in
-                    1)
-                        # 53.1
-                        process_notification "Загружаем v53.1 (Downloading v53.1)"
-                        run_commands "wget https://github.com/t3rn/executor-release/releases/download/v0.53.1/executor-linux-v0.53.1.tar.gz"
-                        echo
-                        process_notification "Распаковка v53.1 (Downloading v53.1)"
-                        run_commands "tar -xvzf executor-linux-v0.53.1.tar.gz && rm -rf executor-linux-v0.53.1.tar.gz"
-                        ;;
-                    2)
-                        # LATEST
-                        LATEST_VERSION=$(curl -s https://api.github.com/repos/t3rn/executor-release/releases/latest | grep 'tag_name' | cut -d\" -f4)
-                        # Latest pre-release version
-                        # LATEST_VERSION=$(curl -s https://api.github.com/repos/t3rn/executor-release/releases | jq -r 'map(select(.prerelease == true)) | .[0].tag_name')
-                         EXECUTOR_URL="https://github.com/t3rn/executor-release/releases/download/${LATEST_VERSION}/executor-linux-${LATEST_VERSION}.tar.gz"
+            process_notification "Скачиваем последнюю версию (Downloading latest version)"
+            show_green "LATEST VERSION = $LATEST_VERSION" && sleep 2
+            run_commands "curl -L -o executor-linux-${LATEST_VERSION}.tar.gz $EXECUTOR_URL"
 
-                        process_notification "Скачиваем последнюю версию (Downloading latest version)"
-                        show_green "LATEST VERSION = $LATEST_VERSION" && sleep 2
-                        run_commands "curl -L -o executor-linux-${LATEST_VERSION}.tar.gz $EXECUTOR_URL"
-
-                        process_notification "Распаковка (Extracting...)"
-                        run_commands "tar -xzvf executor-linux-${LATEST_VERSION}.tar.gz && rm -rf executor-linux-${LATEST_VERSION}.tar.gz"
-                        ;;
-                    *)
-                        incorrect_option
-                        ;;
-                esac
+            process_notification "Распаковка (Extracting...)"
+            run_commands "tar -xzvf executor-linux-${LATEST_VERSION}.tar.gz && rm -rf executor-linux-${LATEST_VERSION}.tar.gz"
             echo
             show_green "--- НОДА УСТАНОВЛЕНА. NODE INSTALLED ---"
             echo
@@ -138,20 +109,19 @@ while true; do
         2)
             process_notification "Настраиваем (Setting up)..."
             echo
-            cd $HOME/executor/
+            cd $HOME/executor/executor/bin
             export ENVIRONMENT=testnet
             export LOG_LEVEL=debug
             export LOG_PRETTY=false
-            export EXECUTOR_PROCESS_CLAIMS_ENABLED=true
             export EXECUTOR_PROCESS_BIDS_ENABLED=true
-            export EXECUTOR_ENABLE_BATCH_BIDING=true
-            export ENABLED_NETWORKS="arbitrum-sepolia,base-sepolia,optimism-sepolia,unichain-sepolia,l2rn"
-            export DISABLED_NETWORKS='blast-sepolia'
+            export EXECUTOR_PROCESS_CLAIMS_ENABLED=true
+            export ENABLED_NETWORKS="arbitrum-sepolia,base-sepolia,optimism-sepolia,unichain-sepolia,blast-sepolia,l2rn"
             export RPC_ENDPOINTS='{
                 "l2rn": ["https://b2n.rpc.caldera.xyz/http"],
-                "arbt": ["https://api.zan.top/arb-sepolia", "https://arbitrum-sepolia.drpc.org", "https://arbitrum-sepolia-rpc.publicnode.com", "https://sepolia-rollup.arbitrum.io/rpc"],
-                "bast": ["https://base-sepolia-rpc.publicnode.com", "https://base-sepolia.drpc.org", "https://base-sepolia.gateway.tenderly.co"],
-                "opst": ["https://sepolia.optimism.io", "https://optimism-sepolia.drpc.org", "https://endpoints.omniatech.io/v1/op/sepolia/public", "https://api.zan.top/opt-sepolia"],
+                "arbt": ["https://arbitrum-sepolia.drpc.org", "https://sepolia-rollup.arbitrum.io/rpc"],
+                "bast": ["https://base-sepolia-rpc.publicnode.com", "https://base-sepolia.drpc.org"],
+                "blst": ["https://sepolia.blast.io", "https://blast-sepolia.drpc.org"],
+                "opst": ["https://sepolia.optimism.io", "https://optimism-sepolia.drpc.org"],
                 "unit": ["https://unichain-sepolia.drpc.org", "https://sepolia.unichain.org"]
             }'
 
@@ -208,7 +178,7 @@ while true; do
                     1)
                         # API
                         export EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API=true
-                        export EXECUTOR_PROCESS_ORDERS_API_ENABLED=true
+                        # export EXECUTOR_PROCESS_ORDERS_API_ENABLED=true
                         echo
                         show_green "🟠 API MODE"
                         echo
@@ -216,7 +186,36 @@ while true; do
                     2)
                         # RPC
                         export EXECUTOR_PROCESS_PENDING_ORDERS_FROM_API=false
-                        export EXECUTOR_PROCESS_ORDERS_API_ENABLED=false
+                        # export EXECUTOR_PROCESS_ORDERS_API_ENABLED=false
+                        # export EXECUTOR_ENABLE_BATCH_BIDDING=true
+
+                        show_orange "Выберите режим RPC (Choose RPC mode): "
+                        echo "1. Standart"
+                        echo "2. Custom"
+                        read -p "Введите номер опции (Enter option number): " option
+                        case $option in
+                            1)
+                                # STANDART
+                                show_green "🟠 STANDART RPC MODE"
+                                ;;
+                            2)
+                                # CUSTOM
+                                show_blue "FORMAT RPC: \"RPC_ENDPOINT_1\", \"RPC_ENDPOINT_2\", \"RPC....\""
+                                read -p "Введите (Enter) ARB SEPOLIA RPC: " ARB
+                                read -p "Введите (Enter) BLAST SEPOLIA RPC: " BLAST
+                                read -p "Введите (Enter) BASE SEPOLIA RPC: " BASE
+                                read -p "Введите (Enter) UNI SEPOLIA RPC: " UNI
+                                read -p "Введите (Enter) OPT SEPOLIA RPC: " OPT
+                                export RPC_ENDPOINTS='{
+                                    "l2rn": ["https://b2n.rpc.caldera.xyz/http"],
+                                    "arbt": [\$ARB\,"https://arbitrum-sepolia.drpc.org","https://sepolia-rollup.arbitrum.io/rpc"],
+                                    "bast": [\$BASE\,"https://base-sepolia-rpc.publicnode.com","https://base-sepolia.drpc.org"],
+                                    "blst": [\$BLAST\,"https://sepolia.blast.io","https://blast-sepolia.drpc.org"],
+                                    "opst": [\$OPT\,"https://sepolia.optimism.io","https://optimism-sepolia.drpc.org"],
+                                    "unit": [\$UNI\,"https://unichain-sepolia.drpc.org","https://sepolia.unichain.org"]
+                                }'
+                                ;;
+                        esac
                         echo
                         show_green "🟠 RPC MODE"
                         echo
@@ -225,6 +224,8 @@ while true; do
                         incorrect_option
                         ;;
                 esac
+            echo
+            show_green "--- НАСТРОЙКА ЗАВЕРШЕНА. TUNNING COMPLETED ---"
             echo
             ;;
         3)
