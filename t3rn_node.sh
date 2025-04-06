@@ -58,6 +58,18 @@ run_commands() {
     fi
 }
 
+build_rpc_list() {
+    local user="$1"
+    shift
+    local result=()
+    [ -n "$user" ] && result+=("\"$user\"")
+    for rpc in "$@"; do
+        result+=("\"$rpc\"")
+    done
+    local joined=$(IFS=, ; echo "${result[*]}")
+    echo "[$joined]"
+}
+
 print_logo() {
     show_orange " .___________. ____   .______      .__   __. " && sleep 0.1
     show_orange " |           ||___ \  |   _  \     |  \ |  | " && sleep 0.1
@@ -206,14 +218,16 @@ while true; do
                                 read -p "Введите (Enter) BASE SEPOLIA RPC: " BASE
                                 read -p "Введите (Enter) UNI SEPOLIA RPC: " UNI
                                 read -p "Введите (Enter) OPT SEPOLIA RPC: " OPT
-                                export RPC_ENDPOINTS='{
-                                    "l2rn": ["https://b2n.rpc.caldera.xyz/http"],
-                                    "arbt": [\$ARB\,"https://arbitrum-sepolia.drpc.org","https://sepolia-rollup.arbitrum.io/rpc"],
-                                    "bast": [\$BASE\,"https://base-sepolia-rpc.publicnode.com","https://base-sepolia.drpc.org"],
-                                    "blst": [\$BLAST\,"https://sepolia.blast.io","https://blast-sepolia.drpc.org"],
-                                    "opst": [\$OPT\,"https://sepolia.optimism.io","https://optimism-sepolia.drpc.org"],
-                                    "unit": [\$UNI\,"https://unichain-sepolia.drpc.org","https://sepolia.unichain.org"]
-                                }'
+                                export RPC_ENDPOINTS="{
+                                    \"l2rn\": [\"https://b2n.rpc.caldera.xyz/http\"],
+                                    \"arbt\": $(build_rpc_list "$ARB" "https://arbitrum-sepolia.drpc.org" "https://sepolia-rollup.arbitrum.io/rpc"),
+                                    \"bast\": $(build_rpc_list "$BASE" "https://base-sepolia-rpc.publicnode.com" "https://base-sepolia.drpc.org"),
+                                    \"blst\": $(build_rpc_list "$BLAST" "https://sepolia.blast.io" "https://blast-sepolia.drpc.org"),
+                                    \"opst\": $(build_rpc_list "$OPT" "https://sepolia.optimism.io" "https://optimism-sepolia.drpc.org"),
+                                    \"unit\": $(build_rpc_list "$UNI" "https://unichain-sepolia.drpc.org" "https://sepolia.unichain.org")
+                                }"
+                                echo "$RPC_ENDPOINTS"
+                                show_green "🟠 CUSTOM RPC MODE"
                                 ;;
                         esac
                         echo
