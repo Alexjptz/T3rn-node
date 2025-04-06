@@ -212,7 +212,7 @@ while true; do
                                 ;;
                             2)
                                 # CUSTOM
-                                show_blue "FORMAT RPC: \"RPC_ENDPOINT_1\", \"RPC_ENDPOINT_2\", \"RPC....\""
+                                show_blue "FORMAT RPC: https://RPC_ENDPOINT"
                                 read -p "Введите (Enter) ARB SEPOLIA RPC: " ARB
                                 read -p "Введите (Enter) BLAST SEPOLIA RPC: " BLAST
                                 read -p "Введите (Enter) BASE SEPOLIA RPC: " BASE
