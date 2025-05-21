@@ -330,6 +330,7 @@ init_executor_environment() {
     export LOG_PRETTY="false"
     export EXECUTOR_PROCESS_BIDS_ENABLED="true"
     export EXECUTOR_PROCESS_CLAIMS_ENABLED="true"
+    export EXECUTOR_MIN_BALANCE_THRESHOLD_ETH=0
 
     save_env_var "ENVIRONMENT" "$ENVIRONMENT"
     save_env_var "LOG_LEVEL" "$LOG_LEVEL"
@@ -652,9 +653,228 @@ load_env_config() {
     show_green "✅ Environment variables loaded."
 }
 
+# WALLET INFO
+
+get_executor_wallet_address() {
+    local file="$HOME/executor/executor/bin/my_cofiguration"
+    if [ -f "$file" ]; then
+        grep "^PRIVATE_KEY_LOCAL=" "$file" | cut -d= -f2 | sed "s/'//g" | awk '{print $1}'
+    fi
+}
+
+prompt_input() {
+    read -p "$1 " input
+    echo "$input"
+}
+
+check_balances() {
+    clear
+    menu_header
+    wallet_address=$(prompt_input "🔑 Enter wallet address:")
+    wallet_address=$(echo "$wallet_address" | xargs)
+
+    echo
+    show_orange "💰 Check Wallet Balances for: $wallet_address"
+
+    [[ ! "$wallet_address" =~ ^0x[a-fA-F0-9]{40}$ ]] && echo "❌ Invalid address." && return
+
+    echo -ne "\e[1;37m⏳ Fetching balances"
+    for i in {1..3}; do
+        echo -ne "."
+        sleep 0.4
+    done
+    echo -e "\e[0m"
+    sleep 0.5
+
+    local url1="https://balancecheck.online/balance/$wallet_address"
+    local resp1=$(curl -s --max-time 5 --connect-timeout 3 "$url1")
+
+    if [[ -z "$resp1" || "$resp1" =~ \"error\" ]]; then
+        echo "❌ Failed to fetch from https://balancecheck.online"
+    else
+        echo
+        show_orange "📊 Live Balances:"
+        echo
+        echo "$resp1" | jq -r '
+            to_entries[] |
+            "   • \(.key): \(.value) " +
+            (if .key == "B2N Network" then "BRN"
+            elif .key == "Monad Testnet" then "MON"
+            elif .key == "BNB Testnet" then "tBNB"
+            elif .key == "Gnosis Testnet" then "XDAI"
+            elif .key == "Sei Testnet" then "SEI"
+            else "ETH" end)'
+    fi
+
+    echo
+    show_orange "⏳ Fetching B2N balance history (last 5 days): "
+    local url2="https://b2n.explorer.caldera.xyz/api/v2/addresses/$wallet_address/coin-balance-history-by-day"
+    local resp2=$(curl -s --max-time 5 --connect-timeout 3 "$url2")
+
+    if echo "$resp2" | jq -e .items >/dev/null 2>&1; then
+        echo ""
+
+        local history
+        history=$(echo "$resp2" | jq -r '.items | reverse[] | "\(.date) \(.value)"' |
+            awk '!seen[$1]++' | head -n 5)
+
+        local i=0
+        local today_balance yesterday_balance
+        while read -r date wei; do
+            BRN=$(awk "BEGIN { printf \"%.6f\", $wei / 1e18 }")
+            printf "   • %s → %s BRN\n" "$date" "$BRN"
+            if [[ $i -eq 0 ]]; then
+                today_balance="$BRN"
+            elif [[ $i -eq 1 ]]; then
+                yesterday_balance="$BRN"
+            fi
+            ((i++))
+        done <<<"$history"
+
+        readarray -t daily_data < <(
+            echo "$resp2" | jq -r '.items | reverse[] | "\(.date)|\(.value)"' |
+                awk -F'|' '!seen[$1]++' | head -n 2
+        )
+
+        if [[ ${#daily_data[@]} -eq 2 ]]; then
+            today_wei=$(echo "${daily_data[0]}" | cut -d'|' -f2)
+            yesterday_wei=$(echo "${daily_data[1]}" | cut -d'|' -f2)
+
+            if [[ -n "$today_wei" && -n "$yesterday_wei" ]]; then
+                change_eth=$(awk "BEGIN { printf \"%.6f\", ($today_wei - $yesterday_wei) / 1e18 }")
+                echo
+                show_orange "📊 Change in last 24h: $change_eth BRN"
+            else
+                echo
+                show_red "❌ Failed to fetch B2N history."
+            fi
+        else
+            echo
+            show_blue "⚠️ Not enough unique days to calculate change."
+        fi
+    else
+        echo
+        show_red "❌ Failed to fetch B2N history."
+    fi
+
+    echo
+    read -p "↩️ Press Enter to return to menu..."
+    clear
+}
+
+show_balance_change_history() {
+    clear
+    menu_header
+    echo
+    show_orange "📊 B2N Live Transactions:"
+    echo
+
+    wallet_address=$(prompt_input "🔑 Enter wallet address:")
+    wallet_address=$(echo "$wallet_address" | xargs)
+
+    if [[ ! "$wallet_address" =~ ^0x[a-fA-F0-9]{40}$ ]]; then
+        echo "❌ Invalid address format."
+        read -p "Press Enter to return..." && return
+    fi
+
+    tput civis
+    trap "tput cnorm; stty echo; clear; return" EXIT
+
+    local -a tx_lines=()
+    local last_tx_hash=""
+
+    resp=$(curl -s --max-time 5 --connect-timeout 3 "https://b2n.explorer.caldera.xyz/api/v2/addresses/$wallet_address/coin-balance-history")
+    tx_lines=($(echo "$resp" | jq -r '.items[:20][] | "\(.block_timestamp)|\(.value)|\(.delta)|\(.transaction_hash)"'))
+    last_tx_hash=$(echo "${tx_lines[0]}" | cut -d"|" -f4)
+
+    draw_all_lines() {
+        for i in "${!tx_lines[@]}"; do
+            IFS="|" read -r timestamp value_raw delta_raw _ <<<"${tx_lines[$i]}"
+
+            ts_epoch=$(date -u -d "$timestamp" +%s 2>/dev/null)
+            [[ -z "$ts_epoch" || "$ts_epoch" -le 0 ]] && continue
+
+            now_epoch=$(date +%s)
+            diff_sec=$((now_epoch - ts_epoch))
+            if ((diff_sec < 60)); then
+                age="${diff_sec}s ago"
+            else
+                age="$((diff_sec / 60))m ago"
+            fi
+
+            delta_eth=$(awk "BEGIN { printf \"%.8f\", $delta_raw / 1e18 }")
+            value_eth=$(awk "BEGIN { printf \"%.8f\", $value_raw / 1e18 }")
+            arrow="▲"
+            [[ "$delta_raw" =~ ^- ]] && arrow="▼"
+
+            tput cup $((6 + i)) 0
+            tput el
+            printf " %-9s │ %-15s │ %s %s\n" "$age" "$value_eth" "$arrow" "$delta_eth"
+        done
+    }
+
+    update_ages_only() {
+        for i in "${!tx_lines[@]}"; do
+            IFS="|" read -r timestamp _ _ _ <<<"${tx_lines[$i]}"
+            ts_epoch=$(date -u -d "$timestamp" +%s 2>/dev/null)
+            [[ -z "$ts_epoch" || "$ts_epoch" -le 0 ]] && continue
+
+            now_epoch=$(date +%s)
+            diff_sec=$((now_epoch - ts_epoch))
+            if ((diff_sec < 60)); then
+                age="${diff_sec}s ago"
+            else
+                age="$((diff_sec / 60))m ago"
+            fi
+
+            tput cup $((6 + i)) 0
+            printf "%-10s" " "
+            tput cup $((6 + i)) 0
+            printf " %-10s" "$age"
+        done
+    }
+
+    clear
+    menu_header
+    show_blue "📋 B2N Live Transactions - Press Enter to return to menu"
+    echo
+    show_orange "Wallet: $wallet_address"
+    echo
+    printf " %-9s │ %-15s │ %-10s\n" "Age" "Balance BRN" "Delta"
+    echo "-----------┼-----------------┼-------------"
+    draw_all_lines
+
+    while true; do
+        resp=$(curl -s "https://b2n.explorer.caldera.xyz/api/v2/addresses/$wallet_address/coin-balance-history")
+        tx=$(echo "$resp" | jq -r '.items[0] | "\(.block_timestamp)|\(.value)|\(.delta)|\(.transaction_hash)"')
+
+        [[ "$tx" == "|||" || -z "$tx" ]] && sleep 1 && continue
+
+        IFS="|" read -r timestamp value_raw delta_raw tx_hash <<<"$tx"
+
+        if [[ "$tx_hash" != "$last_tx_hash" ]]; then
+            tx_lines=("$tx" "${tx_lines[@]}")
+            tx_lines=("${tx_lines[@]:0:20}")
+            last_tx_hash="$tx_hash"
+            draw_all_lines
+        else
+            update_ages_only
+        fi
+
+        read -t 0.5 -n 1 -s -r key </dev/tty
+        [[ $? -eq 0 && "$key" == "" ]] && break
+    done
+
+    tput cnorm
+    echo
+    clear
+}
+
 print_logo
 
 while true; do
+    clear
+    menu_header
     show_gray "────────────────────────────────────────────────────────────"
     show_cyan "         🔋 MAIN OPERATIONS MENU 🔋"
     show_gray "────────────────────────────────────────────────────────────"
@@ -664,8 +884,9 @@ while true; do
     menu_item  2  "🛠️" "Configure"            "Настройки и параметры"
     menu_item  3  "🔁" "Operations"           "Основное управление"
     menu_item  4  "ℹ️" "View Logs"            "Просмотр логов"
-    menu_item  5  "🗑" "Uninstall"            "Удаление компонентов"
-    menu_item  6  "🚪" "Exit"                 "Выход"
+    menu_item  5  "💰" "Wallet Info"          "Информация о кошельке"
+    menu_item  6  "🗑" "Uninstall"            "Удаление компонентов"
+    menu_item  7  "🚪" "Exit"                 "Выход"
 
     show_gray "────────────────────────────────────────────────────────────"
     echo
@@ -703,43 +924,26 @@ while true; do
             read -p "$(show_gray 'Select option ➤ ') " option
             echo
                 case $option in
-                    1)
-                        set_pk
-                        ;;
-                    2)
-                        set_gas
-                        ;;
-                    3)
-                        set_executor_claim_mode
-                        ;;
-                    4)
-                        set_rpc_endpoints
-                        ;;
-                    5)
-                        set_api_or_rpc_mode
-                        ;;
-                    6)
-                        set_enabled_networks
-                        ;;
-                    7)
-                        print_config
-                        ;;
+                    1) set_pk ;;
+                    2) set_gas ;;
+                    3) set_executor_claim_mode ;;
+                    4) set_rpc_endpoints ;;
+                    5) set_api_or_rpc_mode ;;
+                    6) set_enabled_networks ;;
+                    7) print_config ;;
                     8)
                         show_gray "↩️  Returning to main menu..."
                         sleep 0.5
                         break
                         ;;
-                    *)
-                        incorrect_option
-                        ;;
+                    *) incorrect_option ;;
                 esac
             done
             ;;
         3)
+            while true; do
             clear
             menu_header
-            while true; do
-
             show_gray "────────────────────────────────────────────────────────────"
             show_cyan "        🔁 OPERATIONAL CONTROL PANEL"
             show_gray "────────────────────────────────────────────────────────────"
@@ -792,25 +996,43 @@ while true; do
                         sleep 0.5
                         break
                         ;;
-
-                    *)
-                        show_red "❌ Invalid option. Please try again."
-                        sleep 1
-                        ;;
+                    *) incorrect_option ;;
                 esac
             done
             ;;
-        4)
-            view_logs
-            ;;
+        4) view_logs ;;
         5)
-            delete_executor
+            while true; do
+            clear
+            menu_header
+            show_gray "────────────────────────────────────────────────────────────"
+            show_cyan "        💰 WALLET PANEL"
+            show_gray "────────────────────────────────────────────────────────────"
+            echo
+            show_orange "Choose an action:"
+
+            menu_item 1 "🔄" "Check Wallet Balance"  "Проверить баланс"
+            menu_item 2 "🛑" "Check Last txn"        "Проверить транзакции"
+            menu_item 3 "↩️" "Back"                  "Вернуться в главное меню"
+            echo
+
+            read -p "$(show_gray 'Enter option number ➤ ') " option
+            echo
+
+                case $option in
+                1) check_balances ;;
+                2) show_balance_change_history ;;
+                3)
+                    show_gray "↩️  Returning to main menu..."
+                    sleep 0.5
+                    break
+                    ;;
+                *) incorrect_option ;;
+                esac
+            done
             ;;
-        6)
-            exit_script
-            ;;
-        *)
-            incorrect_option
-            ;;
+        6) delete_executor ;;
+        7) exit_script ;;
+        *) incorrect_option ;;
     esac
 done
